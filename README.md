@@ -1,5 +1,5 @@
 # footycomp
-URL: 
+URL: https://footycomp.streamlit.app/
 
 Import your own player dataset and create pizza/radar charts and compare players for chosen stats
 
