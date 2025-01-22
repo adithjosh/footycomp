@@ -221,8 +221,6 @@ def similarity(df,name,position,stats,threshold, nation, team, inverse_stats):
     for stat in stats:
         position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
         #account for statistics where lower numbers = better performance like errors and GA
-        if len(inverse_stats)==0:
-            inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
             
         if stat in inverse_stats:
             position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
@@ -387,9 +385,6 @@ def main():
 
             for stat in stats:
                 position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
-                if len(inverse_stats)==0:
-                    
-                    inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
                 if stat in inverse_stats:
                     position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
 
@@ -448,8 +443,6 @@ def main():
                 position_data[stat] = position_data[stat].fillna(0)
                 position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
                 #inverse/lower score=better stats
-                if len(inverse_stats)==0:
-                    inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
                 if stat in inverse_stats:
                     position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
             player_percentiles = position_data[position_data["Player"] == name][[f"{stat}_Percentile" for stat in stats]].iloc[0].to_dict()
@@ -513,10 +506,10 @@ def main():
         st.sidebar.info(
         """
         **Note**: Currently only have comparison pizza graphs, not radar.
-        Also, percentiles for certain stats *Errors Per 90*, *Goals Allowed Per 90*, 
-        and *GA/SoT Per 90* are **inverted**. This means lower raw values for these stats 
+        Also, it is important to note percentiles for certain stats such as *Errors Per 90*, *Goals Allowed Per 90*, 
+        and *GA/SoT Per 90* should be **inverted**. This is because lower raw values for these stats 
         correspond to higher percentiles, as lower values indicate better performance. You have the ability
-        to add more stats to be considered inverse under the optional filters
+        to add stats to be considered inverse under the optional filters
         """
     )
 if __name__ == "__main__":
