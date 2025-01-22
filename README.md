@@ -1,7 +1,9 @@
 # footycomp
 URL: https://footycomp.streamlit.app/
 
-Import your own player dataset and create pizza/radar charts and compare players for chosen stats
+Import your own player dataset and create pizza/radar charts and compare players for chosen stats.
+
+Requirements to upload dataset: Player (Name), Nation, Team, and Position columns exist.
 
 This streamlit app uses any dataset you provide utilizes the mplsoccer package to create Pizza and Python charts of the players alongside tables for similar players and best players per position based on chosen stats.
 
