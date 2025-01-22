@@ -11,7 +11,7 @@ from mplsoccer import PyPizza, FontManager, Radar
 from unidecode import unidecode
 
 #Code written by Adith George, dataset built using data from FBRef, inspired by work by Naveen Elliott, Liam Henshaw, and other football data analysts on LinkedIn
-    
+
 #radar chart creation
 def radar(player, position, stats, title):
     #define params & respective and ranges
@@ -252,34 +252,38 @@ def similarity(df,name,position,stats,threshold, nation, team, inverse_stats):
 
 
 def load():
-    uploaded_file = st.sidebar.file_uploader("Upload field player dataset (CSV)", type=["csv"])
-    check_f = True
-    if uploaded_file is not None:
-        check_f = False
-        df = pd.read_csv(uploaded_file)
-        st.sidebar.success(f"Uploaded dataset: {uploaded_file.name}")
-    else:
-        df = pd.read_csv("mls_players.csv")
-        st.sidebar.info("Using default MLS field player dataset.")
-    return df, check_f
-def load_gk():
-    uploaded_file = st.sidebar.file_uploader("Upload goalkeeper dataset (CSV)", type=["csv"])
-    check_g = True
-    if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        if "Position" in df.columns:
+    with st.sidebar.expander("Upload Field Player Dataset (CSV)", expanded=False):
+        uploaded_file = st.file_uploader("Upload field player dataset (CSV)", type=["csv"])
+        check_f = True
+        if uploaded_file is not None:
+            check_f = False
+            df = pd.read_csv(uploaded_file)
             st.sidebar.success(f"Uploaded dataset: {uploaded_file.name}")
-            check_g = False
-            if "Name" in df.columns:                
-                df.rename(columns={'Name': 'Player'}, inplace=True)
-            elif "name" in df.columns:                
-                df.rename(columns={'name': 'Player'}, inplace=True)
         else:
-            st.warning("Failed to load, missing position column")
-    else:
-        df = pd.read_csv("mls_gk.csv")
-        st.sidebar.info("Using default MLS goalkeeper dataset.")
+            df = pd.read_csv("mls_players.csv")
+            st.sidebar.info("Using default MLS field player dataset.")
+    return df, check_f
+
+def load_gk():
+    with st.sidebar.expander("Upload Goalkeeper Dataset (CSV)", expanded=False):
+        uploaded_file = st.file_uploader("Upload goalkeeper dataset (CSV)", type=["csv"])
+        check_g = True
+        if uploaded_file is not None:
+            df = pd.read_csv(uploaded_file)
+            if "Position" in df.columns:
+                st.sidebar.success(f"Uploaded dataset: {uploaded_file.name}")
+                check_g = False
+                if "Name" in df.columns:                
+                    df.rename(columns={'Name': 'Player'}, inplace=True)
+                elif "name" in df.columns:                
+                    df.rename(columns={'name': 'Player'}, inplace=True)
+            else:
+                st.warning("Failed to load, missing position column")
+        else:
+            df = pd.read_csv("mls_gk.csv")
+            st.sidebar.info("Using default MLS goalkeeper dataset.")
     return df, check_g
+
     
 #new function test for generating default stats per position:
 def generate_stats(df,position):
