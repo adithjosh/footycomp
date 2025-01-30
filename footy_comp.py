@@ -1,3 +1,4 @@
+import sys
 from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -5,7 +6,6 @@ import numpy as np
 from scipy.stats import rankdata
 import streamlit as st
 from matplotlib.patches import Polygon
-import sys
 from matplotlib.ticker import FixedLocator
 from mplsoccer import PyPizza, FontManager, Radar
 from unidecode import unidecode
@@ -176,11 +176,11 @@ def pizza(player,player_2,stats,title, name1=None,name2=None):
     )
 
     #add credits
-    CREDIT_1 = "Program Written By Adith George"
-    #CREDIT_2 = "Inspired by mplsoccer visualizations and work by Naveen Elliott & Liam Henshaw"
+    CREDIT_1 = "Program Written By Adith George; Data Taken From FBRef (StatsBomb)"
+    CREDIT_2 = "Inspired by mplsoccer visualizations and work by Naveen Elliott & Liam Henshaw"
 
     fig.text(
-        0.99, 0.005, f"{CREDIT_1}", size=9,
+        0.99, 0.005, f"{CREDIT_1}\n{CREDIT_2}", size=9,
         color="#000000", ha="right"
     )
 
@@ -221,6 +221,8 @@ def similarity(df,name,position,stats,threshold, nation, team, inverse_stats):
     for stat in stats:
         position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
         #account for statistics where lower numbers = better performance like errors and GA
+        if len(inverse_stats)==0:
+            inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
             
         if stat in inverse_stats:
             position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
@@ -324,7 +326,7 @@ def main():
     
     #setup sidebar and tabs
     st.sidebar.header("Player Search and Filters")
-    tab1, tab2,tab3 = st.tabs(["Chart", "Similar Players", "Best Players"])
+    tab1, tab2,tab3,tab4,tab5 = st.tabs(["Chart", "Similar Players", "Best Players", "Similarity Chart", "Best Chart"])
     with st.sidebar.expander("Required", expanded=True):
         position = st.selectbox("Select Position", options=["FW", "MF", "DF", "GK"])
         if position == "GK":
@@ -385,6 +387,9 @@ def main():
 
             for stat in stats:
                 position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
+                if len(inverse_stats)==0:
+                    
+                    inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
                 if stat in inverse_stats:
                     position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
 
@@ -404,6 +409,54 @@ def main():
             st.dataframe(
                 top_players[["Player", "Team", "Age","Nation","Score"] + stats]
             )
+    with tab5:
+        #st.subheader("Top Players Across Selected Stats")
+
+        if not stats:
+            st.warning("Please select stats to evaluate the best players.")
+        else:
+            position_data = df[df["Position"] == position].copy()
+            #position_data["Team"] = position_data["Team"].apply(lambda x: teams.get(x))
+            #country filter
+            if nation_filter != "All":
+                position_data = position_data[position_data["Nation"] == nation_filter]
+
+            #team filter
+            if team_filter != "All":
+                position_data = position_data[position_data["Team"] == team_filter]
+
+            position_data[stats] = position_data[stats].fillna(0)
+
+            for stat in stats:
+                position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
+                if len(inverse_stats)==0:
+                    
+                    inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
+                if stat in inverse_stats:
+                    position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
+
+            #uesa average percentile for comparisons
+            percentile_columns = [f"{stat}_Percentile" for stat in stats]
+            position_data["Score"] = round(position_data[percentile_columns].mean(axis=1)*100,1)
+            min_score = position_data["Score"].min()
+            max_score = position_data["Score"].max()
+            position_data["Score"] = ((position_data["Score"] - min_score) / (max_score - min_score)) * 100
+            position_data["Score"] = position_data["Score"].round(1)
+            # Round the scaled scores for display
+            position_data["Score"] = position_data["Score"].round(1)
+            top_players = position_data.sort_values("Score", ascending=False).head(threshold)
+            st.write(f"### Top {threshold} Players in Position: {position}")
+            similar_plot = top_players.sort_values(by="Score", ascending=False)
+            similar_plot.reset_index(drop=True, inplace=True)
+            similar_plot.drop(0,inplace=True)
+            fig,ax=plt.subplots(figsize=(10,8))
+            ax.barh(similar_plot["Player"], similar_plot["Score"])
+            for i, v in enumerate(similar_plot["Score"]):
+                ax.text(v + 1, i, f"{v:.1f}", color="black", va="center", fontsize=8)
+            ax.invert_yaxis()
+            ax.set_title(f"Best Players - {position}")
+            st.pyplot(fig)                                                                                                    
+    
     #choose df from position, then provide available stats for selection
     df["Player"] = df["Player"].apply(lambda x: unidecode(x) if isinstance(x, str) else x)
     if name:
@@ -443,6 +496,8 @@ def main():
                 position_data[stat] = position_data[stat].fillna(0)
                 position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
                 #inverse/lower score=better stats
+                if len(inverse_stats)==0:
+                    inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
                 if stat in inverse_stats:
                     position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
             player_percentiles = position_data[position_data["Player"] == name][[f"{stat}_Percentile" for stat in stats]].iloc[0].to_dict()
@@ -495,21 +550,55 @@ def main():
                     #similar.reset_index(drop=True, inplace=True)
                     similar = similar.drop_duplicates(subset=['Player'])
                     #get player and pass for highlighter +/-
-                    player = similar.iloc[0].to_dict()
+                    #player = similar.iloc[0].to_dict()
                     #similar = similar.style.apply(lambda row: highlight(row,player),axis=1)
                     if not similar.empty:
                         st.dataframe(similar)
                     else:
                         st.warning("No similar players found matching the selected filters.")    
-
+            with tab4:
+                st.subheader("Similar Players Chart")
+                #nation filter
+                if name not in all_player_names:
+                    st.warning("Player not found")
+                else:
+                    if nation_filter == "All":
+                        nation = None
+                    else:
+                        nation = nation_filter
+                    #team filter
+                    if team_filter == "All":
+                        team = None
+                    else:
+                        team = team_filter
+                    #get similar players
+                    similar = similarity(df,name,position,stats, threshold, nation, team, inverse_stats)
+                    similar.reset_index(drop=True, inplace=True)
+                    similar = similar.drop_duplicates(subset=['Player'])
+                    #get player and pass for highlighter +/-
+                    player_name = similar.iloc[0]["Player"]
+                    #similar = similar.style.apply(lambda row: highlight(row,player),axis=1)
+                    if not similar.empty:
+                        similar_plot = similar.sort_values(by="Similarity", ascending=False)
+                        similar_plot.drop(0,inplace=True)
+                        fig,ax=plt.subplots(figsize=(10,8))
+                        ax.barh(similar_plot["Player"], similar_plot["Similarity"])
+                        for i, v in enumerate(similar_plot["Similarity"]):
+                            ax.text(v + 1, i, f"{v:.1f}%", color="black", va="center", fontsize=8)
+                        ax.invert_yaxis()
+                        ax.set_title(f"{player_name} - {position} Similarity Chart")
+                        st.pyplot(fig)
+                    else:
+                        st.warning("No similar players found matching the selected filters.")  
+                  
             
         st.sidebar.info(
         """
         **Note**: Currently only have comparison pizza graphs, not radar.
-        Also, it is important to note percentiles for certain stats such as *Errors Per 90*, *Goals Allowed Per 90*, 
-        and *GA/SoT Per 90* should be **inverted**. This is because lower raw values for these stats 
+        Also, percentiles for certain stats *Errors Per 90*, *Goals Allowed Per 90*, 
+        and *GA/SoT Per 90* are **inverted**. This means lower raw values for these stats 
         correspond to higher percentiles, as lower values indicate better performance. You have the ability
-        to add stats to be considered inverse under the optional filters
+        to add more stats to be considered inverse under the optional filters
         """
     )
 if __name__ == "__main__":
