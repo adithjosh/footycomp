@@ -448,7 +448,7 @@ def main():
             st.write(f"### Top {threshold} Players in Position: {position}")
             similar_plot = top_players.sort_values(by="Score", ascending=False)
             similar_plot.reset_index(drop=True, inplace=True)
-            similar_plot.drop(0,inplace=True)
+            #similar_plot.drop(0,inplace=True)
             fig,ax=plt.subplots(figsize=(10,8))
             ax.barh(similar_plot["Player"], similar_plot["Score"])
             for i, v in enumerate(similar_plot["Score"]):
@@ -549,6 +549,7 @@ def main():
                     similar = similarity(df,name,position,stats, threshold, nation, team, inverse_stats)
                     #similar.reset_index(drop=True, inplace=True)
                     similar = similar.drop_duplicates(subset=['Player'])
+                    similar.reset_index(drop=True, inplace=True)
                     #get player and pass for highlighter +/-
                     #player = similar.iloc[0].to_dict()
                     #similar = similar.style.apply(lambda row: highlight(row,player),axis=1)
