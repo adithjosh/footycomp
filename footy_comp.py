@@ -176,8 +176,8 @@ def pizza(player,player_2,stats,title, name1=None,name2=None):
     )
 
     #add credits
-    CREDIT_1 = "Program Written By Adith George; Data Taken From FBRef (StatsBomb)"
-    CREDIT_2 = "Inspired by mplsoccer visualizations and work by Naveen Elliott & Liam Henshaw"
+    CREDIT_1 = "Program Written By Adith George"
+    CREDIT_2 = "Check out MPL Soccer Python Package to Learn More"
 
     fig.text(
         0.99, 0.005, f"{CREDIT_1}\n{CREDIT_2}", size=9,
