@@ -403,6 +403,7 @@ def main():
             # Round the scaled scores for display
             position_data["Score"] = position_data["Score"].round(1)
             top_players = position_data.sort_values("Score", ascending=False).head(threshold)
+            top_players.reset_index(drop=True, inplace=True)
 
         
             st.write(f"### Top {threshold} Players in Position: {position}")
