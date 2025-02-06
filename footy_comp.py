@@ -214,16 +214,15 @@ def similarity(df,name,position,stats,threshold, nation, team, inverse_stats):
     if team:
         position_data = position_data[position_data["Team"]==team].copy()
     #ensure player is present in position df
-    if name not in position_data["Player"].values:
+    if not position_data.isin(player).all(axis=1).any():
         position_data = pd.concat([position_data,player], ignore_index=True)
-    position_data = position_data.drop_duplicates(subset=["Player"])
-    position_data.fillna(position_data.mean(), inplace=True)
+    position_data = position_data.drop_duplicates(subset=["Player"]).fillna(0)
     #calculate percentiles
-    percentiles = position_data[stats].apply(lambda x: rankdata(x, method="average") / len(x))
     for stat in stats:
-        position_data[f"{stat}_Percentile"] = percentiles[stat]
-
+        position_data[f"{stat}_Percentile"] = rankdata(position_data[stat], method="average") / len(position_data)
         #account for statistics where lower numbers = better performance like errors and GA
+        if len(inverse_stats)==0:
+            inverse_stats = ["Errors Per 90", "Goals Allowed Per 90", "GA/SoT Per 90"]
             
         if stat in inverse_stats:
             position_data[f"{stat}_Percentile"] = 1 - position_data[f"{stat}_Percentile"]
