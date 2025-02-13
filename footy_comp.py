@@ -541,7 +541,7 @@ def main():
                     
                 st.write(f"### {name} vs {compare if compare else ''} - {position} Stats")
                 st.dataframe(player_raw_stats.style.format(precision=2))
-                st.dataframe(player_raw_stats.style.set_properties(**{'text-align': 'center'}))
+                #st.dataframe(player_raw_stats.style.set_properties(**{'text-align': 'center'}))
             with tab2:
                 st.subheader("Similar Players")
                 #nation filter
