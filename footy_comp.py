@@ -531,13 +531,17 @@ def main():
             #develop tab contents
             with tab1:
                 st.pyplot(fig)
-                player_data = pd.DataFrame([player_stats], index=[name])
+                player_raw_stats = df[df["Player"] == name][stats]
+                player_raw_stats.insert(0, "Player", name)  # Add player name for display
+            
                 if compare:
-                    compare_data = pd.DataFrame([player_2_stats], index=[compare])
-                    player_data = pd.concat([player_data, compare_data])
+                    compare_raw_stats = df[df["Player"] == compare][stats]
+                    compare_raw_stats.insert(0, "Player", compare)
+                    player_raw_stats = pd.concat([player_raw_stats, compare_raw_stats], ignore_index=True)
                     
                 st.write(f"### {name} vs {compare if compare else ''} - {position} Stats")
-                st.dataframe(player_data.style.set_properties(**{'text-align': 'center'}))
+                st.dataframe(player_raw_stats.style.format(precision=2))
+                st.dataframe(player_raw_stats.style.set_properties(**{'text-align': 'center'}))
             with tab2:
                 st.subheader("Similar Players")
                 #nation filter
